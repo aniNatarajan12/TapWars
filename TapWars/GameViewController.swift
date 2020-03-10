@@ -31,7 +31,11 @@ class GameViewController: UIViewController {
     
     var taps = 0
     var score = 0
+    var gamesPlayed = 0
+    var redWins = 0
+    var blueWins = 0
     var playingGame = false
+    var gameOver = false
     var reverse = false
     
     override var prefersStatusBarHidden: Bool {
@@ -88,6 +92,12 @@ class GameViewController: UIViewController {
         startLabel.text = "\(startTime)"
         startLabel.transform = CGAffineTransform(rotationAngle: .pi/2)
         startTimer = Timer.scheduledTimer(timeInterval: 1, target: self, selector: (#selector(updateTimer)), userInfo: nil, repeats: true)
+        
+        score = 0
+        taps = 0
+        startTime = 3
+        startDate = Date.init()
+        startLabel.text = "\(startTime)"
     }
     
     override func viewDidLayoutSubviews() {
@@ -151,27 +161,63 @@ class GameViewController: UIViewController {
     func checkWin() {
         if abs(score)==targetScore {
             playingGame = false
+            gamesPlayed += 1
             if score < 0 {
-                winnerLabel.text = "Red Team Wins!"
-                winnerLabel.textColor = player2ScoreLabel.textColor
-                gameDescriptionLabel.textColor = player2ScoreLabel.textColor
-                goHomeButton.titleLabel?.textColor = player2ScoreLabel.textColor
-                contentView.transform = CGAffineTransform(rotationAngle: 0)
-                contentView.backgroundColor = player2View.backgroundColor
-                reverse = false
-                showPopup()
+                redWins += 1
+                if targetGames/2 < redWins {
+                    gameOver = true
+                    winnerLabel.text = "Red Team Wins \(redWins) - \(blueWins)!"
+                    winnerLabel.textColor = player2ScoreLabel.textColor
+                    gameDescriptionLabel.textColor = player2ScoreLabel.textColor
+                    goHomeButton.setTitle("Go Home", for: .normal)
+                    goHomeButton.setTitleColor(player2ScoreLabel.textColor, for: .normal)
+                    contentView.transform = CGAffineTransform(rotationAngle: 0)
+                    contentView.backgroundColor = player2View.backgroundColor
+                    reverse = false
+                    gameDescriptionLabel.text = "This game had \(taps) total taps and took \(Date.init().seconds(from: startDate)) seconds.\nRed Team wins the match!"
+                    showPopup()
+                } else {
+                    winnerLabel.text = "Red Team Wins!"
+                    winnerLabel.textColor = player2ScoreLabel.textColor
+                    gameDescriptionLabel.textColor = player2ScoreLabel.textColor
+                    goHomeButton.setTitle("Next Game", for: .normal)
+                    goHomeButton.setTitleColor(player2ScoreLabel.textColor, for: .normal)
+                    contentView.transform = CGAffineTransform(rotationAngle: 0)
+                    contentView.backgroundColor = player2View.backgroundColor
+                    reverse = false
+                    gameDescriptionLabel.text = "This game had \(taps) total taps and took \(Date.init().seconds(from: startDate)) seconds.\nThe score is \(redWins) - \(blueWins)"
+                    showPopup()
+                }
             } else {
-                winnerLabel.text = "Blue Team Wins!"
-                winnerLabel.textColor = player1ScoreLabel.textColor
-                gameDescriptionLabel.textColor = player1ScoreLabel.textColor
-                goHomeButton.titleLabel?.textColor = player1ScoreLabel.textColor
-                contentView.transform = CGAffineTransform(rotationAngle: .pi)
-                contentView.backgroundColor = player1View.backgroundColor
-                reverse = true
-                showPopup()
+                blueWins += 1
+                if targetGames/2 < blueWins {
+                    gameOver = true
+                    winnerLabel.text = "Blue Team Wins \(blueWins) - \(redWins)!"
+                    winnerLabel.textColor = player1ScoreLabel.textColor
+                    gameDescriptionLabel.textColor = player1ScoreLabel.textColor
+                    goHomeButton.setTitle("Go Home", for: .normal)
+                    goHomeButton.setTitleColor(player1ScoreLabel.textColor, for: .normal)
+                    contentView.transform = CGAffineTransform(rotationAngle: .pi)
+                    contentView.backgroundColor = player1View.backgroundColor
+                    reverse = true
+                    gameDescriptionLabel.text = "This game had \(taps) total taps and took \(Date.init().seconds(from: startDate)) seconds.\nBlue Team wins the match!"
+                    showPopup()
+                } else {
+                    winnerLabel.text = "Blue Team Wins!"
+                    winnerLabel.textColor = player1ScoreLabel.textColor
+                    gameDescriptionLabel.textColor = player1ScoreLabel.textColor
+                    goHomeButton.setTitle("Next Game", for: .normal)
+                    goHomeButton.setTitleColor(player1ScoreLabel.textColor, for: .normal)
+                    contentView.transform = CGAffineTransform(rotationAngle: .pi)
+                    contentView.backgroundColor = player1View.backgroundColor
+                    reverse = true
+                    gameDescriptionLabel.text = "This game had \(taps) total taps and took \(Date.init().seconds(from: startDate)) seconds.\nThe score is \(blueWins) - \(redWins)"
+                    showPopup()
+                }
             }
         }
     }
+    
     
     func showPopup() {
         blurView.alpha = 0
@@ -179,7 +225,6 @@ class GameViewController: UIViewController {
         
         blurView.isHidden = false
         contentView.isHidden = false
-        gameDescriptionLabel.text = "This game had \(taps) total taps and took \(Date.init().seconds(from: startDate)) seconds."
         
         UIView.animate(withDuration: 0.5, animations: {
             self.blurView.alpha = 0.66
@@ -202,7 +247,17 @@ class GameViewController: UIViewController {
         }, completion: { (completed) in
             self.blurView.isHidden = true
             self.contentView.isHidden = true
-            self.performSegue(withIdentifier: "goHome", sender: self)
+            if self.gameOver {
+                self.performSegue(withIdentifier: "goHome", sender: self)
+            } else {
+                self.playingGame = false
+                for view in self.view.subviews {
+                    if view.isHidden == false {
+                        view.removeFromSuperview()
+                    }
+                }
+                self.setupStart()
+            }
         })
     }
 

@@ -9,7 +9,8 @@
 import Foundation
 import UIKit
 
-var targetScore = 5
+var targetScore = 10
+var targetGames = 3
 class HomeViewController: UIViewController {
     @IBOutlet var startButton: UIButton!
     
@@ -22,6 +23,9 @@ class HomeViewController: UIViewController {
         let defaults = UserDefaults.standard
         if let t = defaults.string(forKey: "targetScore") {
             targetScore = Int(t)!
+        }
+        if let g = defaults.string(forKey: "targetGames") {
+            targetGames = Int(g)!
         }
     }
     
